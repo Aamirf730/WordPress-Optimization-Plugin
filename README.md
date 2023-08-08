@@ -3,6 +3,8 @@ Welcome to Easy WordPress Optimization - an all-in-one solution to improve your 
 
 This WordPress plugin is developed by WPGeared, aiming to streamline the optimization process for your WordPress website. Our goal is to provide a simple, efficient, and effective tool that handles numerous WordPress optimization tasks, saving you the effort of installing multiple plugins.
 
+Note -: This plugins works on Apache servers only.
+
 Why Easy WordPress Optimization?
 The performance and security of your WordPress website can significantly influence your user experience, SEO, and ultimately, your site's success. WordPress is a fantastic platform, but as you build and grow your site, some features can slow it down or present potential security issues.
 

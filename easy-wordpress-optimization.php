@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Easy WordPress Optimization
-Description: Adds security headers and WordPress optimization features to your website.
-Version: 1.1
+Description: Adds security headers, WordPress optimization features, and JavaScript delay loading to your website.
+Version: 1.2
 Author: <a href="https://wpgeared.com/">WPGeared</a>
 */
 
@@ -102,5 +102,123 @@ function remove_bloats() {
     }
 }
 
+function delay_js_loading() {
+    $options = get_option('js_delay_settings');
+    
+    if(isset($options['enable_js_delay']) && $options['enable_js_delay']) {
+        // Add JavaScript to handle delayed loading
+        add_action('wp_footer', 'add_delay_js_script');
+        
+        // Modify script loading to add data attributes
+        add_filter('script_loader_tag', 'add_delay_attributes_to_scripts', 10, 3);
+    }
+}
+
+function add_delay_attributes_to_scripts($tag, $handle, $src) {
+    $options = get_option('js_delay_settings');
+    $delay_scripts = isset($options['delay_scripts']) ? $options['delay_scripts'] : array();
+    
+    // Check if this script should be delayed
+    if (in_array($handle, $delay_scripts)) {
+        // Add data attributes for delayed loading
+        $tag = str_replace('<script ', '<script data-delay="true" ', $tag);
+    }
+    
+    return $tag;
+}
+
+function add_delay_js_script() {
+    $options = get_option('js_delay_settings');
+    $delay_time = isset($options['delay_time']) ? intval($options['delay_time']) : 2000;
+    $load_on_interaction = isset($options['load_on_interaction']) ? $options['load_on_interaction'] : false;
+    
+    ?>
+    <script>
+    (function() {
+        'use strict';
+        
+        // Configuration
+        const delayTime = <?php echo $delay_time; ?>;
+        const loadOnInteraction = <?php echo $load_on_interaction ? 'true' : 'false'; ?>;
+        
+        // Store delayed scripts
+        const delayedScripts = [];
+        let scriptsLoaded = false;
+        
+        // Function to load delayed scripts
+        function loadDelayedScripts() {
+            if (scriptsLoaded) return;
+            scriptsLoaded = true;
+            
+            delayedScripts.forEach(function(script) {
+                const newScript = document.createElement('script');
+                
+                // Copy all attributes from original script
+                Array.from(script.attributes).forEach(function(attr) {
+                    if (attr.name !== 'data-delay') {
+                        newScript.setAttribute(attr.name, attr.value);
+                    }
+                });
+                
+                // Replace the delayed script with the new one
+                script.parentNode.replaceChild(newScript, script);
+            });
+        }
+        
+        // Function to handle user interaction
+        function handleUserInteraction() {
+            if (loadOnInteraction && !scriptsLoaded) {
+                loadDelayedScripts();
+                // Remove event listeners after loading
+                document.removeEventListener('scroll', handleUserInteraction, { passive: true });
+                document.removeEventListener('mousemove', handleUserInteraction, { passive: true });
+                document.removeEventListener('click', handleUserInteraction, { passive: true });
+                document.removeEventListener('keydown', handleUserInteraction, { passive: true });
+            }
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDelay);
+        } else {
+            initDelay();
+        }
+        
+        function initDelay() {
+            // Find all scripts with data-delay attribute
+            const scripts = document.querySelectorAll('script[data-delay="true"]');
+            
+            if (scripts.length === 0) return;
+            
+            // Store scripts for later loading
+            scripts.forEach(function(script) {
+                delayedScripts.push(script);
+            });
+            
+            // Set up loading strategy
+            if (loadOnInteraction) {
+                // Load on first user interaction
+                document.addEventListener('scroll', handleUserInteraction, { passive: true });
+                document.addEventListener('mousemove', handleUserInteraction, { passive: true });
+                document.addEventListener('click', handleUserInteraction, { passive: true });
+                document.addEventListener('keydown', handleUserInteraction, { passive: true });
+            } else {
+                // Load after delay time
+                setTimeout(loadDelayedScripts, delayTime);
+            }
+            
+            // Fallback: load scripts after 5 seconds regardless
+            setTimeout(function() {
+                if (!scriptsLoaded) {
+                    loadDelayedScripts();
+                }
+            }, 5000);
+        }
+    })();
+    </script>
+    <?php
+}
+
 add_action('send_headers', 'add_security_headers');
 add_action('init', 'remove_bloats');
+add_action('init', 'delay_js_loading');

@@ -10,6 +10,7 @@ add_action('admin_menu', 'ewo_menu');
 function ewo_settings_init() {
     register_setting('ewoPluginPage', 'security_headers_settings');
     register_setting('ewoPluginPage', 'remove_bloat_settings');
+    register_setting('ewoPluginPage', 'js_delay_settings');
 
     // Security headers settings
     add_settings_section('security_headers_section', '', 'security_headers_section_callback', 'securityHeadersPage');
@@ -47,6 +48,14 @@ function ewo_settings_init() {
     foreach ($bloats as $key => $label) {
         add_settings_field($key, $label, create_render_function($key, 'remove_bloat_settings'), 'removeBloatPage', 'remove_bloat_section');
     }
+
+    // JavaScript delay settings
+    add_settings_section('js_delay_section', '', 'js_delay_section_callback', 'jsDelayPage');
+    
+    add_settings_field('enable_js_delay', 'Enable JavaScript Delay Loading', 'enable_js_delay_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('delay_time', 'Delay Time (milliseconds)', 'delay_time_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('load_on_interaction', 'Load on User Interaction', 'load_on_interaction_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('delay_scripts', 'Scripts to Delay', 'delay_scripts_callback', 'jsDelayPage', 'js_delay_section');
 }
 
 function create_render_function($name, $option_name) {
@@ -68,6 +77,72 @@ function security_headers_section_callback() {
 
 function remove_bloat_section_callback() {
     echo __('Choose the WordPress bloat you want to remove:', 'wordpress');
+}
+
+function js_delay_section_callback() {
+    echo __('Configure JavaScript delay loading settings to improve page speed:', 'wordpress');
+}
+
+function enable_js_delay_callback() {
+    $options = get_option('js_delay_settings');
+    $isChecked = isset($options['enable_js_delay']) && $options['enable_js_delay'] == 1;
+    ?>
+    <label class="toggle-switch">
+        <input type='checkbox' name='js_delay_settings[enable_js_delay]' <?php checked($isChecked, true); ?> value='1'>
+        <span class="slider"></span>
+    </label>
+    <p class="description">Enable JavaScript delay loading to improve initial page load speed.</p>
+    <?php
+}
+
+function delay_time_callback() {
+    $options = get_option('js_delay_settings');
+    $delay_time = isset($options['delay_time']) ? $options['delay_time'] : 2000;
+    ?>
+    <input type='number' name='js_delay_settings[delay_time]' value='<?php echo esc_attr($delay_time); ?>' min='500' max='10000' step='500' />
+    <p class="description">Time in milliseconds to wait before loading delayed scripts (500-10000ms).</p>
+    <?php
+}
+
+function load_on_interaction_callback() {
+    $options = get_option('js_delay_settings');
+    $isChecked = isset($options['load_on_interaction']) && $options['load_on_interaction'] == 1;
+    ?>
+    <label class="toggle-switch">
+        <input type='checkbox' name='js_delay_settings[load_on_interaction]' <?php checked($isChecked, true); ?> value='1'>
+        <span class="slider"></span>
+    </label>
+    <p class="description">Load delayed scripts on first user interaction (scroll, click, etc.) instead of after delay time.</p>
+    <?php
+}
+
+function delay_scripts_callback() {
+    $options = get_option('js_delay_settings');
+    $delay_scripts = isset($options['delay_scripts']) ? $options['delay_scripts'] : array();
+    
+    // Get common WordPress scripts
+    $common_scripts = array(
+        'jquery' => 'jQuery',
+        'jquery-migrate' => 'jQuery Migrate',
+        'wp-embed' => 'WordPress Embeds',
+        'comment-reply' => 'Comment Reply',
+        'wp-emoji-release' => 'Emoji Script',
+        'wp-api' => 'WordPress REST API',
+        'wp-util' => 'WordPress Utilities'
+    );
+    
+    echo '<div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">';
+    foreach ($common_scripts as $handle => $name) {
+        $isChecked = in_array($handle, $delay_scripts);
+        ?>
+        <label style="display: block; margin-bottom: 5px;">
+            <input type='checkbox' name='js_delay_settings[delay_scripts][]' value='<?php echo esc_attr($handle); ?>' <?php checked($isChecked, true); ?> />
+            <?php echo esc_html($name); ?> (<?php echo esc_html($handle); ?>)
+        </label>
+        <?php
+    }
+    echo '</div>';
+    echo '<p class="description">Select which scripts should be delayed. Only non-critical scripts should be delayed.</p>';
 }
 
 function ewo_options_page() {
@@ -139,15 +214,20 @@ function ewo_options_page() {
             <?php
             settings_fields('ewoPluginPage');
             
+            $current_tab = isset($_GET['tab']) ? $_GET['tab'] : 'securityHeaders';
+            
             echo '<h2 class="nav-tab-wrapper">';
-            echo '<a href="?page=easy-wordpress-optimization&tab=securityHeaders" class="nav-tab ' . ($_GET['tab'] == 'securityHeaders' ? 'nav-tab-active' : '') . '">Security Headers</a>';
-            echo '<a href="?page=easy-wordpress-optimization&tab=removeBloat" class="nav-tab ' . ($_GET['tab'] == 'removeBloat' ? 'nav-tab-active' : '') . '">Remove Bloats</a>';
+            echo '<a href="?page=easy-wordpress-optimization&tab=securityHeaders" class="nav-tab ' . ($current_tab == 'securityHeaders' ? 'nav-tab-active' : '') . '">Security Headers</a>';
+            echo '<a href="?page=easy-wordpress-optimization&tab=removeBloat" class="nav-tab ' . ($current_tab == 'removeBloat' ? 'nav-tab-active' : '') . '">Remove Bloats</a>';
+            echo '<a href="?page=easy-wordpress-optimization&tab=jsDelay" class="nav-tab ' . ($current_tab == 'jsDelay' ? 'nav-tab-active' : '') . '">JS Delay Loading</a>';
             echo '</h2>';
 
-            if ($_GET['tab'] == 'securityHeaders') {
+            if ($current_tab == 'securityHeaders') {
                 do_settings_sections('securityHeadersPage');
-            } else {
+            } elseif ($current_tab == 'removeBloat') {
                 do_settings_sections('removeBloatPage');
+            } elseif ($current_tab == 'jsDelay') {
+                do_settings_sections('jsDelayPage');
             }
 
             submit_button();

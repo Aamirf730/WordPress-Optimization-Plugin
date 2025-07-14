@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Delay Loading Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        .loaded {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .delayed {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        .script-info {
+            background: #e9ecef;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>JavaScript Delay Loading Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Overview</h2>
+        <p>This page demonstrates how the WordPress optimization plugin's JavaScript delay loading feature works. The scripts below are configured to be delayed:</p>
+        <ul>
+            <li><strong>jQuery</strong> - Will be delayed and loaded after 2 seconds or on user interaction</li>
+            <li><strong>Test Script</strong> - A custom script that shows when it loads</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Script Loading Status</h2>
+        <div id="jquery-status" class="status delayed">
+            <strong>jQuery:</strong> Waiting to load...
+        </div>
+        <div id="test-script-status" class="status delayed">
+            <strong>Test Script:</strong> Waiting to load...
+        </div>
+        <div id="interaction-status" class="status">
+            <strong>User Interaction:</strong> None detected yet
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testFunction()">Test Function (requires jQuery)</button>
+        <button onclick="showScriptInfo()">Show Script Information</button>
+        <button onclick="location.reload()">Reload Page</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Watch the script status indicators above</li>
+            <li>Wait 2 seconds to see time-based loading, or interact with the page (scroll, click, etc.) to see interaction-based loading</li>
+            <li>Try the "Test Function" button before and after scripts load</li>
+            <li>Use browser dev tools to see the delayed scripts in the DOM</li>
+        </ol>
+    </div>
+
+    <div id="script-info" class="script-info" style="display: none;">
+        <h3>Script Information</h3>
+        <div id="script-details"></div>
+    </div>
+
+    <!-- This script would normally be delayed by the plugin -->
+    <script data-delay="true" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Test script that would also be delayed -->
+    <script data-delay="true">
+        // This script simulates a delayed script
+        (function() {
+            console.log('Test script loaded at:', new Date().toLocaleTimeString());
+            
+            // Update status when loaded
+            const statusElement = document.getElementById('test-script-status');
+            if (statusElement) {
+                statusElement.className = 'status loaded';
+                statusElement.innerHTML = '<strong>Test Script:</strong> Loaded at ' + new Date().toLocaleTimeString();
+            }
+            
+            // Test function that requires this script
+            window.testDelayedFunction = function() {
+                alert('This function is available after the delayed script loads!');
+            };
+        })();
+    </script>
+
+    <!-- Main delay loading script (simulates the plugin's functionality) -->
+    <script>
+        (function() {
+            'use strict';
+            
+            // Configuration
+            const delayTime = 2000; // 2 seconds
+            const loadOnInteraction = true; // Enable interaction-based loading
+            
+            // Store delayed scripts
+            const delayedScripts = [];
+            let scriptsLoaded = false;
+            let interactionDetected = false;
+            
+            // Function to load delayed scripts
+            function loadDelayedScripts() {
+                if (scriptsLoaded) return;
+                scriptsLoaded = true;
+                
+                console.log('Loading delayed scripts at:', new Date().toLocaleTimeString());
+                
+                delayedScripts.forEach(function(script) {
+                    const newScript = document.createElement('script');
+                    
+                    // Copy all attributes from original script
+                    Array.from(script.attributes).forEach(function(attr) {
+                        if (attr.name !== 'data-delay') {
+                            newScript.setAttribute(attr.name, attr.value);
+                        }
+                    });
+                    
+                    // Copy innerHTML if it exists
+                    if (script.innerHTML) {
+                        newScript.innerHTML = script.innerHTML;
+                    }
+                    
+                    // Replace the delayed script with the new one
+                    script.parentNode.replaceChild(newScript, script);
+                });
+                
+                // Update jQuery status
+                setTimeout(function() {
+                    if (typeof jQuery !== 'undefined') {
+                        const jqueryStatus = document.getElementById('jquery-status');
+                        if (jqueryStatus) {
+                            jqueryStatus.className = 'status loaded';
+                            jqueryStatus.innerHTML = '<strong>jQuery:</strong> Loaded at ' + new Date().toLocaleTimeString();
+                        }
+                    }
+                }, 100);
+            }
+            
+            // Function to handle user interaction
+            function handleUserInteraction() {
+                if (!interactionDetected) {
+                    interactionDetected = true;
+                    const interactionStatus = document.getElementById('interaction-status');
+                    if (interactionStatus) {
+                        interactionStatus.innerHTML = '<strong>User Interaction:</strong> Detected at ' + new Date().toLocaleTimeString();
+                        interactionStatus.className = 'status loaded';
+                    }
+                    
+                    if (loadOnInteraction && !scriptsLoaded) {
+                        loadDelayedScripts();
+                        // Remove event listeners after loading
+                        document.removeEventListener('scroll', handleUserInteraction, { passive: true });
+                        document.removeEventListener('mousemove', handleUserInteraction, { passive: true });
+                        document.removeEventListener('click', handleUserInteraction, { passive: true });
+                        document.removeEventListener('keydown', handleUserInteraction, { passive: true });
+                    }
+                }
+            }
+            
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initDelay);
+            } else {
+                initDelay();
+            }
+            
+            function initDelay() {
+                // Find all scripts with data-delay attribute
+                const scripts = document.querySelectorAll('script[data-delay="true"]');
+                
+                if (scripts.length === 0) return;
+                
+                console.log('Found', scripts.length, 'delayed scripts');
+                
+                // Store scripts for later loading
+                scripts.forEach(function(script) {
+                    delayedScripts.push(script);
+                });
+                
+                // Set up loading strategy
+                if (loadOnInteraction) {
+                    // Load on first user interaction
+                    document.addEventListener('scroll', handleUserInteraction, { passive: true });
+                    document.addEventListener('mousemove', handleUserInteraction, { passive: true });
+                    document.addEventListener('click', handleUserInteraction, { passive: true });
+                    document.addEventListener('keydown', handleUserInteraction, { passive: true });
+                } else {
+                    // Load after delay time
+                    setTimeout(loadDelayedScripts, delayTime);
+                }
+                
+                // Fallback: load scripts after 5 seconds regardless
+                setTimeout(function() {
+                    if (!scriptsLoaded) {
+                        console.log('Fallback: Loading scripts after 5 seconds');
+                        loadDelayedScripts();
+                    }
+                }, 5000);
+            }
+        })();
+    </script>
+
+    <!-- Test functions -->
+    <script>
+        function testFunction() {
+            if (typeof jQuery !== 'undefined') {
+                alert('jQuery is loaded! Version: ' + jQuery.fn.jquery);
+            } else {
+                alert('jQuery is not loaded yet. Please wait for the delayed script to load.');
+            }
+        }
+        
+        function showScriptInfo() {
+            const scriptInfo = document.getElementById('script-info');
+            const scriptDetails = document.getElementById('script-details');
+            
+            const scripts = document.querySelectorAll('script');
+            let details = '<h4>All Scripts on Page:</h4>';
+            
+            scripts.forEach(function(script, index) {
+                const src = script.src || 'Inline script';
+                const delayed = script.hasAttribute('data-delay') ? ' (DELAYED)' : '';
+                details += `<div><strong>${index + 1}.</strong> ${src}${delayed}</div>`;
+            });
+            
+            scriptDetails.innerHTML = details;
+            scriptInfo.style.display = 'block';
+        }
+        
+        // Test delayed function
+        function testDelayedFunction() {
+            if (typeof window.testDelayedFunction === 'function') {
+                window.testDelayedFunction();
+            } else {
+                alert('Delayed function not available yet. Please wait for the script to load.');
+            }
+        }
+    </script>
+</body>
+</html>

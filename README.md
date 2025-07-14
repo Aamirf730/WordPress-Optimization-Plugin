@@ -1,49 +1,151 @@
-# Easy WordPress Optimization
-Welcome to Easy WordPress Optimization - an all-in-one solution to improve your WordPress website's performance and security!
+# Easy WordPress Optimization Plugin
 
-This WordPress plugin is developed by WPGeared, aiming to streamline the optimization process for your WordPress website. Our goal is to provide a simple, efficient, and effective tool that handles numerous WordPress optimization tasks, saving you the effort of installing multiple plugins.
+A comprehensive WordPress optimization plugin that improves your website's performance, security, and user experience through multiple optimization techniques.
 
-Note -: This plugins works on Apache servers only.
+## Features
 
-Why Easy WordPress Optimization?
-The performance and security of your WordPress website can significantly influence your user experience, SEO, and ultimately, your site's success. WordPress is a fantastic platform, but as you build and grow your site, some features can slow it down or present potential security issues.
+### 🔒 Security Headers
+- **X-Frame-Options**: Prevents clickjacking attacks
+- **X-XSS-Protection**: Enables browser's XSS filtering
+- **X-Content-Type-Options**: Prevents MIME type sniffing
+- **Strict-Transport-Security**: Enforces HTTPS connections
+- **Content-Security-Policy**: Controls resource loading
+- **Referrer-Policy**: Controls referrer information
+- **Feature-Policy**: Controls browser features
+- **Expect-CT**: Certificate Transparency enforcement
 
-Easy WordPress Optimization addresses these potential pitfalls, removing unnecessary features (known as "bloat") and strengthening the site's security, thus speeding up your website and providing a safer environment for your visitors.
+### 🚀 Performance Optimization
+- **JavaScript Delay Loading**: Delays non-critical JavaScript files to improve initial page load speed
+- **WordPress Bloat Removal**: Removes unnecessary WordPress features and scripts
 
-Features
-WordPress Bloat Removal
-This feature lets you disable or remove several features that WordPress includes by default, which may not be necessary for every site:
+### 📦 Bloat Removal
+- Disable WordPress emojis
+- Remove jQuery Migrate
+- Disable WordPress embeds
+- Remove XML-RPC functionality
+- Remove unnecessary meta links (wlwmanifest, RSD, shortlink)
+- Disable self pingbacks
 
-Disable Emojis: Prevents loading of emoji-related scripts and styles.
-Disable Embeds: Disables WordPress embeds, reducing requests from your WordPress site.
-Disable XML-RPC: Disables XML-RPC to enhance security.
-Remove jQuery Migrate: Removes the jQuery migration script from your WordPress site, reducing load time.
-Remove wlwmanifest Link: Removes the wlwmanifest link if you don't use Windows Live Writer.
-Remove RSD Link: Removes the RSD link from your WordPress site's header.
-Remove Shortlink: Removes the WordPress shortlink from the header.
-Disable Self Pingbacks: Prevents your site from sending pingbacks to itself.
-Security Headers
-This feature allows you to enable several important HTTP security headers:
+## 🆕 JavaScript Delay Loading Feature
 
-X Frame Options: Helps protect your visitors against clickjacking attacks.
-X-XSS-Protection: Helps protect your visitors against cross-site scripting attacks.
-X Content Type Options: Helps prevent attacks based on MIME type confusion.
-X Permitted Cross Domain Policies: Restricts Adobe Flash Player's access to data.
-Strict Transport Security: Enforces secure (HTTP over SSL) connections to the server.
-Content Security Policy: Helps prevent a wide range of attacks, including Cross-site scripting and other cross-site injections.
-Referrer Policy: Controls how much information is included in the Referer header.
-Feature Policy: Allows site owners to enable and disable certain web platform features on their own pages and those they embed.
-Expect CT: Allows a site to determine if they are ready for the upcoming Chrome requirements and/or enforce their CT policy.
-All these settings can be easily toggled on/off from the plugin's settings page.
+The JavaScript delay loading feature is designed to improve your website's initial page load speed by delaying non-critical JavaScript files.
 
-Usage
-Download and install the plugin from this repository, then navigate to Settings > WP Optimization in your WordPress dashboard. Here, you can customize the settings as per your requirements. Save changes and your site will instantly benefit from the tweaks!
+### How It Works
 
-Contributing
-We appreciate contributions of any kind. If you would like to contribute, please fork the repository and make changes as you'd like. Pull requests are warmly welcome.
+1. **Script Identification**: The plugin identifies scripts that should be delayed based on your configuration
+2. **Attribute Addition**: Adds `data-delay="true"` attributes to selected scripts
+3. **Delayed Loading**: Scripts are loaded either after a specified delay time or on first user interaction
+4. **Fallback Protection**: Scripts are automatically loaded after 5 seconds regardless of other conditions
 
-Feedback
-We are open to feedback, bug reports, and feature requests. Feel free to open an issue in this repository.
+### Configuration Options
 
-License
-Easy WordPress Optimization is open-sourced software licensed under the MIT license.
+#### Enable JavaScript Delay Loading
+Toggle to enable/disable the JavaScript delay loading feature.
+
+#### Delay Time (milliseconds)
+Set the time to wait before loading delayed scripts (500-10000ms). Default: 2000ms
+
+#### Load on User Interaction
+When enabled, delayed scripts will load on the first user interaction (scroll, click, mousemove, keydown) instead of after the delay time.
+
+#### Scripts to Delay
+Select which WordPress scripts should be delayed:
+- **jQuery**: WordPress's jQuery library
+- **jQuery Migrate**: jQuery compatibility layer
+- **WordPress Embeds**: Embed functionality
+- **Comment Reply**: Comment threading scripts
+- **Emoji Script**: WordPress emoji support
+- **WordPress REST API**: REST API scripts
+- **WordPress Utilities**: Utility functions
+
+### Best Practices
+
+1. **Only delay non-critical scripts**: Don't delay scripts that are essential for page functionality
+2. **Test thoroughly**: Ensure your website works correctly with delayed scripts
+3. **Monitor performance**: Use tools like Google PageSpeed Insights to measure improvements
+4. **Consider user experience**: Balance speed improvements with functionality
+
+### Technical Implementation
+
+The plugin uses a sophisticated JavaScript implementation that:
+- Preserves all original script attributes
+- Handles both time-based and interaction-based loading
+- Includes fallback mechanisms for reliability
+- Uses passive event listeners for performance
+- Maintains script execution order
+
+## Installation
+
+1. Upload the plugin files to `/wp-content/plugins/easy-wordpress-optimization/`
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Go to Settings > WP Optimization to configure the plugin
+
+## Configuration
+
+### Security Headers
+Navigate to the "Security Headers" tab to enable/disable various security headers. Each header provides specific security benefits and can be toggled independently.
+
+### Bloat Removal
+Use the "Remove Bloats" tab to select which WordPress features to disable. Be cautious when removing features as some may be required by your theme or other plugins.
+
+### JavaScript Delay Loading
+Configure JavaScript delay loading in the "JS Delay Loading" tab:
+- Enable the feature
+- Set delay time
+- Choose loading strategy (time-based or interaction-based)
+- Select scripts to delay
+
+## Compatibility
+
+- WordPress 5.0+
+- PHP 7.4+
+- All major browsers (Chrome, Firefox, Safari, Edge)
+
+## Performance Impact
+
+- **Security Headers**: Minimal impact, headers are sent early in the request
+- **Bloat Removal**: Positive impact, reduces HTTP requests and file sizes
+- **JavaScript Delay Loading**: Significant positive impact on initial page load speed
+
+## Troubleshooting
+
+### JavaScript Delay Issues
+If you experience issues with delayed scripts:
+1. Check that critical scripts are not being delayed
+2. Verify script dependencies are maintained
+3. Test with different delay times
+4. Consider disabling interaction-based loading
+
+### Security Header Conflicts
+Some security headers may conflict with certain plugins or themes:
+1. Disable conflicting headers individually
+2. Test thoroughly after changes
+3. Check browser console for errors
+
+## Support
+
+For support and feature requests, please visit [WPGeared](https://wpgeared.com/).
+
+## Changelog
+
+### Version 1.2
+- Added JavaScript delay loading feature
+- Improved admin interface with tabbed navigation
+- Enhanced documentation and user guidance
+
+### Version 1.1
+- Added comprehensive bloat removal features
+- Improved security header implementation
+- Enhanced admin interface
+
+### Version 1.0
+- Initial release with security headers
+- Basic WordPress optimization features
+
+## License
+
+This plugin is licensed under the GPL v2 or later.
+
+## Contributing
+
+Contributions are welcome! Please ensure your code follows WordPress coding standards and includes appropriate documentation.

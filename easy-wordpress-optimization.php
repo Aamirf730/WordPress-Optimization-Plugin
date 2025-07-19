@@ -49,6 +49,21 @@ function add_security_headers() {
     }
 }
 
+// Function to remove jQuery migrate
+function remove_jquery_migrate_function($scripts) {
+    $scripts->remove('jquery');
+    $scripts->add('jquery', false, array('jquery-core'), '1.12.4');
+}
+
+// Function to disable self pingbacks
+function disable_self_pingbacks_function( &$links ) {
+    foreach ( $links as $l => $link ) {
+        if ( 0 === strpos( $link, get_option( 'home' ) ) ) {
+            unset($links[$l]);
+        }
+    }
+}
+
 function remove_bloats() {
     $options = get_option('remove_bloat_settings');
     
@@ -56,6 +71,14 @@ function remove_bloats() {
     if(isset($options['disable_emojis']) && $options['disable_emojis']) {
         remove_action('wp_head', 'print_emoji_detection_script', 7);
         remove_action('wp_print_styles', 'print_emoji_styles');
+        remove_action('admin_print_scripts', 'print_emoji_detection_script');
+        remove_action('admin_print_styles', 'print_emoji_styles');
+        remove_filter('the_content_feed', 'wp_staticize_emoji');
+        remove_filter('comment_text_rss', 'wp_staticize_emoji');
+        remove_filter('wp_mail', 'wp_staticize_emoji_for_email');
+        add_filter('tiny_mce_plugins', function($plugins) {
+            return array_diff($plugins, array('wpemoji'));
+        });
     }
     
     if(isset($options['disable_dashicons']) && $options['disable_dashicons']) {
@@ -64,6 +87,8 @@ function remove_bloats() {
 
     if(isset($options['disable_embeds']) && $options['disable_embeds']) {
         wp_deregister_script('wp-embed');
+        remove_action('wp_head', 'wp_oembed_add_discovery_links');
+        remove_action('wp_head', 'wp_oembed_add_host_js');
     }
 
     if(isset($options['disable_xmlrpc']) && $options['disable_xmlrpc']) {
@@ -71,10 +96,6 @@ function remove_bloats() {
     }
 
     if(isset($options['remove_jquery_migrate']) && $options['remove_jquery_migrate']) {
-        function remove_jquery_migrate_function($scripts) {
-            $scripts->remove('jquery');
-            $scripts->add('jquery', false, array('jquery-core'), '1.12.4');
-        }
         add_action('wp_default_scripts', 'remove_jquery_migrate_function');
     }
 
@@ -91,13 +112,6 @@ function remove_bloats() {
     }
 
     if(isset($options['disable_self_pingbacks']) && $options['disable_self_pingbacks']) {
-        function disable_self_pingbacks_function( &$links ) {
-            foreach ( $links as $l => $link ) {
-                if ( 0 === strpos( $link, get_option( 'home' ) ) ) {
-                    unset($links[$l]);
-                }
-            }
-        }
         add_action('pre_ping', 'disable_self_pingbacks_function');
     }
 }

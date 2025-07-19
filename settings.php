@@ -35,6 +35,7 @@ function ewo_settings_init() {
 
     $bloats = [
         'disable_emojis' => 'Disable Emojis',
+        'disable_dashicons' => 'Disable Dashicons',
         'disable_embeds' => 'Disable Embeds',
         'disable_xmlrpc' => 'Disable XML-RPC',
         'remove_jquery_migrate' => 'Remove jQuery Migrate',

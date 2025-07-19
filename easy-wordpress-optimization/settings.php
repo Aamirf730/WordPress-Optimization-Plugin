@@ -59,6 +59,7 @@ function ewo_settings_init() {
     add_settings_field('delay_scripts', 'Scripts to Delay (Selective Mode)', 'delay_scripts_callback', 'jsDelayPage', 'js_delay_section');
     add_settings_field('custom_delay_scripts', 'Custom Scripts to Delay', 'custom_delay_scripts_callback', 'jsDelayPage', 'js_delay_section');
     add_settings_field('exclude_scripts', 'Scripts to Exclude (Delay All Mode)', 'exclude_scripts_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('debug_mode', 'Debug Mode', 'debug_mode_callback', 'jsDelayPage', 'js_delay_section');
 }
 
 function create_render_function($name, $option_name) {
@@ -188,6 +189,18 @@ function custom_delay_scripts_callback() {
     <p class="description">Enter additional script handles or file paths to delay (e.g., "my-custom-script, /wp-content/themes/my-theme/script.js"). Separate multiple entries with commas. These will be added to the selected scripts above.</p>
     <?php
     echo '</div>';
+}
+
+function debug_mode_callback() {
+    $options = get_option('js_delay_settings');
+    $debug_mode = isset($options['debug_mode']) ? $options['debug_mode'] : 0;
+    ?>
+    <label class="toggle-switch">
+        <input type='checkbox' name='js_delay_settings[debug_mode]' <?php checked($debug_mode, 1); ?> value='1'>
+        <span class="slider"></span>
+    </label>
+    <p class="description">Enable debug mode to log script processing information to the WordPress debug log. Check your wp-content/debug.log file for details.</p>
+    <?php
 }
 
 function exclude_scripts_callback() {

@@ -138,6 +138,16 @@ function add_delay_attributes_to_scripts($tag, $handle, $src) {
     $options = get_option('js_delay_settings');
     $delay_mode = isset($options['delay_mode']) ? $options['delay_mode'] : 'selective';
     
+    // Ensure $src is a string
+    $src = is_string($src) ? $src : '';
+    
+    // Debug mode from admin settings
+    $debug_mode = isset($options['debug_mode']) ? $options['debug_mode'] : false;
+    
+    if ($debug_mode) {
+        error_log("EWO Debug - Handle: $handle, Src: $src, Mode: $delay_mode");
+    }
+    
     if ($delay_mode === 'selective') {
         // Selective mode: only delay specified scripts
         $delay_scripts = isset($options['delay_scripts']) ? $options['delay_scripts'] : array();
@@ -156,7 +166,7 @@ function add_delay_attributes_to_scripts($tag, $handle, $src) {
         
         // Check if script should be delayed by src path
         foreach ($delay_scripts as $delay_script) {
-            if (strpos($delay_script, '/') !== false && strpos($src, $delay_script) !== false) {
+            if (strpos($delay_script, '/') !== false && !empty($src) && strpos($src, $delay_script) !== false) {
                 $tag = str_replace('<script ', '<script data-delay="true" ', $tag);
                 break;
             }
@@ -168,21 +178,49 @@ function add_delay_attributes_to_scripts($tag, $handle, $src) {
         
         if (!empty($exclude_scripts_text)) {
             $exclude_scripts = array_map('trim', explode(',', $exclude_scripts_text));
+            // Remove empty entries
+            $exclude_scripts = array_filter($exclude_scripts);
         }
         
         // Check if script should be excluded by handle
         if (in_array($handle, $exclude_scripts)) {
+            if ($debug_mode) {
+                error_log("EWO Debug - Excluded by handle: $handle");
+            }
             return $tag; // Don't delay this script
         }
         
         // Check if script should be excluded by src path
-        foreach ($exclude_scripts as $exclude) {
-            if (strpos($exclude, '/') !== false && strpos($src, $exclude) !== false) {
-                return $tag; // Don't delay this script
+        if (!empty($src)) {
+            foreach ($exclude_scripts as $exclude) {
+                $exclude = trim($exclude);
+                if (!empty($exclude)) {
+                    // Check for exact path match or partial path match
+                    if (strpos($exclude, '/') !== false) {
+                        // File path matching
+                        if (strpos($src, $exclude) !== false) {
+                            if ($debug_mode) {
+                                error_log("EWO Debug - Excluded by path: $exclude in $src");
+                            }
+                            return $tag; // Don't delay this script
+                        }
+                    } else {
+                        // Script handle matching in src
+                        if (strpos($src, $exclude) !== false) {
+                            if ($debug_mode) {
+                                error_log("EWO Debug - Excluded by handle in src: $exclude in $src");
+                            }
+                            return $tag; // Don't delay this script
+                        }
+                    }
+                }
             }
         }
         
         // Delay this script
+        if ($debug_mode) {
+            error_log("EWO Debug - Delaying script: $handle ($src)");
+        }
         $tag = str_replace('<script ', '<script data-delay="true" ', $tag);
     }
     

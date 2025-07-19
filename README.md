@@ -42,13 +42,18 @@ The JavaScript delay loading feature is designed to improve your website's initi
 #### Enable JavaScript Delay Loading
 Toggle to enable/disable the JavaScript delay loading feature.
 
+#### Delay Mode
+Choose between two delay strategies:
+- **Selective Delay**: Only delay specific scripts that you select
+- **Delay All JS Files**: Delay all JavaScript files except those you explicitly exclude
+
 #### Delay Time (milliseconds)
 Set the time to wait before loading delayed scripts (500-10000ms). Default: 2000ms
 
 #### Load on User Interaction
 When enabled, delayed scripts will load on the first user interaction (scroll, click, mousemove, keydown) instead of after the delay time.
 
-#### Scripts to Delay
+#### Scripts to Delay (Selective Mode)
 Select which WordPress scripts should be delayed:
 - **jQuery**: WordPress's jQuery library
 - **jQuery Migrate**: jQuery compatibility layer
@@ -57,6 +62,16 @@ Select which WordPress scripts should be delayed:
 - **Emoji Script**: WordPress emoji support
 - **WordPress REST API**: REST API scripts
 - **WordPress Utilities**: Utility functions
+
+#### Custom Scripts to Delay (Selective Mode)
+Enter additional script handles or file paths to delay. Examples:
+- Script handles: `my-custom-script, another-script`
+- File paths: `/wp-content/themes/my-theme/script.js, /wp-content/plugins/my-plugin/assets/script.js`
+
+#### Scripts to Exclude (Delay All Mode)
+Enter script handles or file paths to exclude from delay. Only these scripts will load immediately:
+- Script handles: `jquery, wp-embed`
+- File paths: `/wp-content/plugins/critical-plugin/script.js`
 
 ### Best Practices
 
@@ -68,11 +83,14 @@ Select which WordPress scripts should be delayed:
 ### Technical Implementation
 
 The plugin uses a sophisticated JavaScript implementation that:
+- Supports two delay modes: selective and delay-all
 - Preserves all original script attributes
 - Handles both time-based and interaction-based loading
 - Includes fallback mechanisms for reliability
 - Uses passive event listeners for performance
 - Maintains script execution order
+- Supports both script handles and file path matching
+- Provides dynamic UI that adapts to the selected mode
 
 ## Installation
 

@@ -53,9 +53,12 @@ function ewo_settings_init() {
     add_settings_section('js_delay_section', '', 'js_delay_section_callback', 'jsDelayPage');
     
     add_settings_field('enable_js_delay', 'Enable JavaScript Delay Loading', 'enable_js_delay_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('delay_mode', 'Delay Mode', 'delay_mode_callback', 'jsDelayPage', 'js_delay_section');
     add_settings_field('delay_time', 'Delay Time (milliseconds)', 'delay_time_callback', 'jsDelayPage', 'js_delay_section');
     add_settings_field('load_on_interaction', 'Load on User Interaction', 'load_on_interaction_callback', 'jsDelayPage', 'js_delay_section');
-    add_settings_field('delay_scripts', 'Scripts to Delay', 'delay_scripts_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('delay_scripts', 'Scripts to Delay (Selective Mode)', 'delay_scripts_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('custom_delay_scripts', 'Custom Scripts to Delay', 'custom_delay_scripts_callback', 'jsDelayPage', 'js_delay_section');
+    add_settings_field('exclude_scripts', 'Scripts to Exclude (Delay All Mode)', 'exclude_scripts_callback', 'jsDelayPage', 'js_delay_section');
 }
 
 function create_render_function($name, $option_name) {
@@ -95,6 +98,18 @@ function enable_js_delay_callback() {
     <?php
 }
 
+function delay_mode_callback() {
+    $options = get_option('js_delay_settings');
+    $delay_mode = isset($options['delay_mode']) ? $options['delay_mode'] : 'selective'; // Default to selective
+    ?>
+    <select name="js_delay_settings[delay_mode]">
+        <option value="selective" <?php selected($delay_mode, 'selective'); ?>>Selective Delay (Specify Scripts)</option>
+        <option value="all" <?php selected($delay_mode, 'all'); ?>>Delay All JS Files (Exclude Specific Ones)</option>
+    </select>
+    <p class="description">Choose how scripts should be delayed. Selective mode allows you to specify which scripts to delay, while all mode delays all JS files except those explicitly excluded.</p>
+    <?php
+}
+
 function delay_time_callback() {
     $options = get_option('js_delay_settings');
     $delay_time = isset($options['delay_time']) ? $options['delay_time'] : 2000;
@@ -119,6 +134,15 @@ function load_on_interaction_callback() {
 function delay_scripts_callback() {
     $options = get_option('js_delay_settings');
     $delay_scripts = isset($options['delay_scripts']) ? $options['delay_scripts'] : array();
+    $delay_mode = isset($options['delay_mode']) ? $options['delay_mode'] : 'selective';
+    
+    echo '<div class="js-delay-field field-delay-scripts">';
+    
+    if ($delay_mode === 'all') {
+        echo '<p style="color: #666; font-style: italic;">This option is disabled in "Delay All JS Files" mode. Use the "Scripts to Exclude" field below instead.</p>';
+        echo '</div>';
+        return;
+    }
     
     // Get common WordPress scripts
     $common_scripts = array(
@@ -143,6 +167,47 @@ function delay_scripts_callback() {
     }
     echo '</div>';
     echo '<p class="description">Select which scripts should be delayed. Only non-critical scripts should be delayed.</p>';
+    echo '</div>';
+}
+
+function custom_delay_scripts_callback() {
+    $options = get_option('js_delay_settings');
+    $custom_delay_scripts = isset($options['custom_delay_scripts']) ? $options['custom_delay_scripts'] : '';
+    $delay_mode = isset($options['delay_mode']) ? $options['delay_mode'] : 'selective';
+    
+    echo '<div class="js-delay-field field-delay-scripts">';
+    
+    if ($delay_mode === 'all') {
+        echo '<p style="color: #666; font-style: italic;">This option is disabled in "Delay All JS Files" mode. Use the "Scripts to Exclude" field below instead.</p>';
+        echo '</div>';
+        return;
+    }
+    
+    ?>
+    <textarea name="js_delay_settings[custom_delay_scripts]" rows="3" cols="50" style="width: 100%;"><?php echo esc_textarea($custom_delay_scripts); ?></textarea>
+    <p class="description">Enter additional script handles or file paths to delay (e.g., "my-custom-script, /wp-content/themes/my-theme/script.js"). Separate multiple entries with commas. These will be added to the selected scripts above.</p>
+    <?php
+    echo '</div>';
+}
+
+function exclude_scripts_callback() {
+    $options = get_option('js_delay_settings');
+    $exclude_scripts = isset($options['exclude_scripts']) ? $options['exclude_scripts'] : '';
+    $delay_mode = isset($options['delay_mode']) ? $options['delay_mode'] : 'selective';
+    
+    echo '<div class="js-delay-field field-exclude-scripts">';
+    
+    if ($delay_mode === 'selective') {
+        echo '<p style="color: #666; font-style: italic;">This option is disabled in "Selective Delay" mode. Use the "Scripts to Delay" field above instead.</p>';
+        echo '</div>';
+        return;
+    }
+    
+    ?>
+    <textarea name="js_delay_settings[exclude_scripts]" rows="5" cols="50" style="width: 100%;"><?php echo esc_textarea($exclude_scripts); ?></textarea>
+    <p class="description">Enter script handles or file paths to exclude from delay (e.g., "jquery, wp-embed, /wp-content/plugins/my-plugin/script.js"). Separate multiple entries with commas. Only these scripts will load immediately.</p>
+    <?php
+    echo '</div>';
 }
 
 function ewo_options_page() {
@@ -206,7 +271,38 @@ function ewo_options_page() {
         .nav-tab-wrapper {
             margin-bottom: 20px;
         }
+        
+        .js-delay-field {
+            transition: opacity 0.3s ease;
+        }
+        
+        .js-delay-field.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
     </style>
+    
+    <script>
+    jQuery(document).ready(function($) {
+        function toggleDelayFields() {
+            var delayMode = $('select[name="js_delay_settings[delay_mode]"]').val();
+            
+            if (delayMode === 'selective') {
+                $('.field-delay-scripts').removeClass('disabled');
+                $('.field-exclude-scripts').addClass('disabled');
+            } else {
+                $('.field-delay-scripts').addClass('disabled');
+                $('.field-exclude-scripts').removeClass('disabled');
+            }
+        }
+        
+        // Initial state
+        toggleDelayFields();
+        
+        // On change
+        $('select[name="js_delay_settings[delay_mode]"]').on('change', toggleDelayFields);
+    });
+    </script>
 
     <div class="wrap">
         <h1>Easy WordPress Optimization</h1>

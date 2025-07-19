@@ -65,10 +65,13 @@
     
     <div class="test-section">
         <h2>Test Overview</h2>
-        <p>This page demonstrates how the WordPress optimization plugin's JavaScript delay loading feature works. The scripts below are configured to be delayed:</p>
+        <p>This page demonstrates how the WordPress optimization plugin's JavaScript delay loading feature works with the new dual-mode system:</p>
         <ul>
+            <li><strong>Selective Mode</strong>: Only delays scripts you specifically choose</li>
+            <li><strong>Delay All Mode</strong>: Delays all JS files except those you exclude</li>
             <li><strong>jQuery</strong> - Will be delayed and loaded after 2 seconds or on user interaction</li>
             <li><strong>Test Script</strong> - A custom script that shows when it loads</li>
+            <li><strong>Custom Script</strong> - Demonstrates file path matching</li>
         </ul>
     </div>
 
@@ -80,14 +83,32 @@
         <div id="test-script-status" class="status delayed">
             <strong>Test Script:</strong> Waiting to load...
         </div>
+        <div id="custom-script-status" class="status delayed">
+            <strong>Custom Script:</strong> Waiting to load...
+        </div>
         <div id="interaction-status" class="status">
             <strong>User Interaction:</strong> None detected yet
         </div>
     </div>
 
     <div class="test-section">
+        <h2>Delay Mode Information</h2>
+        <div style="background: #e8f4fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+            <h4>Current Test Configuration:</h4>
+            <ul>
+                <li><strong>Mode:</strong> Selective Delay (simulating plugin's selective mode)</li>
+                <li><strong>Delayed Scripts:</strong> jQuery, Test Script, Custom Script</li>
+                <li><strong>Loading Strategy:</strong> User Interaction (scroll, click, etc.)</li>
+                <li><strong>Fallback:</strong> 5 seconds timeout</li>
+            </ul>
+            <p><em>In the actual plugin, you can switch between "Selective Delay" and "Delay All JS Files" modes in the admin settings.</em></p>
+        </div>
+    </div>
+
+    <div class="test-section">
         <h2>Test Controls</h2>
         <button onclick="testFunction()">Test Function (requires jQuery)</button>
+        <button onclick="testCustomFunction()">Test Custom Function</button>
         <button onclick="showScriptInfo()">Show Script Information</button>
         <button onclick="location.reload()">Reload Page</button>
     </div>
@@ -126,6 +147,27 @@
             // Test function that requires this script
             window.testDelayedFunction = function() {
                 alert('This function is available after the delayed script loads!');
+            };
+        })();
+    </script>
+
+    <!-- Custom script to demonstrate file path matching -->
+    <script data-delay="true" src="/wp-content/themes/custom-theme/script.js"></script>
+    <script data-delay="true">
+        // This simulates a custom theme script
+        (function() {
+            console.log('Custom script loaded at:', new Date().toLocaleTimeString());
+            
+            // Update status when loaded
+            const statusElement = document.getElementById('custom-script-status');
+            if (statusElement) {
+                statusElement.className = 'status loaded';
+                statusElement.innerHTML = '<strong>Custom Script:</strong> Loaded at ' + new Date().toLocaleTimeString();
+            }
+            
+            // Custom function
+            window.customThemeFunction = function() {
+                alert('Custom theme function is now available!');
             };
         })();
     </script>
@@ -279,6 +321,15 @@
                 window.testDelayedFunction();
             } else {
                 alert('Delayed function not available yet. Please wait for the script to load.');
+            }
+        }
+        
+        // Test custom function
+        function testCustomFunction() {
+            if (typeof window.customThemeFunction === 'function') {
+                window.customThemeFunction();
+            } else {
+                alert('Custom theme function not available yet. Please wait for the script to load.');
             }
         }
     </script>

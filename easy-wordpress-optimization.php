@@ -116,11 +116,53 @@ function delay_js_loading() {
 
 function add_delay_attributes_to_scripts($tag, $handle, $src) {
     $options = get_option('js_delay_settings');
-    $delay_scripts = isset($options['delay_scripts']) ? $options['delay_scripts'] : array();
+    $delay_mode = isset($options['delay_mode']) ? $options['delay_mode'] : 'selective';
     
-    // Check if this script should be delayed
-    if (in_array($handle, $delay_scripts)) {
-        // Add data attributes for delayed loading
+    if ($delay_mode === 'selective') {
+        // Selective mode: only delay specified scripts
+        $delay_scripts = isset($options['delay_scripts']) ? $options['delay_scripts'] : array();
+        $custom_delay_scripts_text = isset($options['custom_delay_scripts']) ? $options['custom_delay_scripts'] : '';
+        
+        // Add custom scripts to the delay list
+        if (!empty($custom_delay_scripts_text)) {
+            $custom_delay_scripts = array_map('trim', explode(',', $custom_delay_scripts_text));
+            $delay_scripts = array_merge($delay_scripts, $custom_delay_scripts);
+        }
+        
+        // Check if script should be delayed by handle
+        if (in_array($handle, $delay_scripts)) {
+            $tag = str_replace('<script ', '<script data-delay="true" ', $tag);
+        }
+        
+        // Check if script should be delayed by src path
+        foreach ($delay_scripts as $delay_script) {
+            if (strpos($delay_script, '/') !== false && strpos($src, $delay_script) !== false) {
+                $tag = str_replace('<script ', '<script data-delay="true" ', $tag);
+                break;
+            }
+        }
+    } else {
+        // All mode: delay all scripts except excluded ones
+        $exclude_scripts_text = isset($options['exclude_scripts']) ? $options['exclude_scripts'] : '';
+        $exclude_scripts = array();
+        
+        if (!empty($exclude_scripts_text)) {
+            $exclude_scripts = array_map('trim', explode(',', $exclude_scripts_text));
+        }
+        
+        // Check if script should be excluded by handle
+        if (in_array($handle, $exclude_scripts)) {
+            return $tag; // Don't delay this script
+        }
+        
+        // Check if script should be excluded by src path
+        foreach ($exclude_scripts as $exclude) {
+            if (strpos($exclude, '/') !== false && strpos($src, $exclude) !== false) {
+                return $tag; // Don't delay this script
+            }
+        }
+        
+        // Delay this script
         $tag = str_replace('<script ', '<script data-delay="true" ', $tag);
     }
     
